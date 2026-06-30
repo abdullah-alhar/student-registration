@@ -1,0 +1,2 @@
+L002,shanru ,shanru@gmail.com,0765432234,colombo,s123,Engineering,Mechanical Engineering
+L003,Rayyan,r@gmail.com,0786543345,weligama,r123,Law,Human Rights Law

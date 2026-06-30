@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>EduPortal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config={darkMode:'class', theme:{extend:{colors:{primary:{50:'#eff6ff',100:'#dbeafe',500:'#3b82f6',600:'#2563eb',900:'#1e3a8a'}}}}} </script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *{font-family:'Outfit',sans-serif}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .animate-fade-in{animation:fadeIn .4s ease-out forwards}
+        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .dark .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 min-h-screen flex transition-colors">
+<!-- ADMIN Sidebar -->
+<aside th:if="${userRole == 'ADMIN'}" class="w-64 bg-slate-900 text-white flex flex-col h-screen fixed left-0 top-0 z-50 shadow-2xl transition-all duration-300">
+    <div class="p-6 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-tr from-primary-600 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </div>
+            <span class="text-xl font-bold tracking-tight">EduPortal</span>
+        </div>
+    </div>
+    <nav class="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-hide">
+        <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Main Menu</p>
+        <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Dashboard
+        </a>
+        <a href="/admins" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            Admins
+        </a>
+        <a href="/students" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            Students
+        </a>
+        <a href="/lecturers" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            Lecturers
+        </a>
+        <a href="/courses" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            Courses
+        </a>
+        <a href="/categories" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            Categories
+        </a>
+        <a href="/schedules" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Schedules
+        </a>
+        <a href="/rooms" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            Rooms
+        </a>
+        <a href="/registrations" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            Registrations
+        </a>
+        <a href="/payments" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            Payments
+        </a>
+        <a href="/materials" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Materials
+        </a>
+        <a href="/feedbacks" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Feedback
+        </a>
+    </nav>
+    <div class="p-4 border-t border-white/10 bg-slate-900/50 backdrop-blur-md">
+        <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 mb-3 transition-colors group">
+            <div class="w-9 h-9 bg-gradient-to-tr from-primary-600 to-cyan-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md" th:text="${userName != null ? userName.substring(0,1) : 'A'}">A</div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-white truncate" th:text="${userName}">Admin</p>
+                <p class="text-xs text-slate-400 truncate">Administrator</p>
+            </div>
+        </a>
+        <div class="flex gap-2">
+            <button onclick="toggleDarkMode()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                Theme
+            </button>
+            <a href="/logout" class="flex-1 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Logout
+            </a>
+        </div>
+    </div>
+</aside>
+<!-- STUDENT Sidebar -->
+<aside th:if="${userRole == 'STUDENT'}" class="w-64 bg-slate-900 text-white flex flex-col h-screen fixed left-0 top-0 z-50 shadow-2xl transition-all duration-300">
+    <div class="p-6 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+            </div>
+            <span class="text-xl font-bold tracking-tight">EduPortal</span>
+        </div>
+    </div>
+    <nav class="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-hide">
+        <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Student Area</p>
+        <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Dashboard
+        </a>
+        <a href="/courses" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            Course Catalog
+        </a>
+        <a href="/registrations" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            My Registrations
+        </a>
+        <a href="/schedules" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            My Schedule
+        </a>
+        <a href="/payments" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            My Payments
+        </a>
+        <a href="/materials" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Materials
+        </a>
+        <a href="/feedbacks" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Feedback
+        </a>
+    </nav>
+    <div class="p-4 border-t border-white/10 bg-slate-900/50 backdrop-blur-md">
+        <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 mb-3 transition-colors group">
+            <div class="w-9 h-9 bg-gradient-to-tr from-emerald-500 to-teal-400 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md" th:text="${userName != null ? userName.substring(0,1) : 'S'}">S</div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-white truncate" th:text="${userName}">Student</p>
+                <p class="text-xs text-slate-400 truncate">Student</p>
+            </div>
+        </a>
+        <div class="flex gap-2">
+            <button onclick="toggleDarkMode()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                Theme
+            </button>
+            <a href="/logout" class="flex-1 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Logout
+            </a>
+        </div>
+    </div>
+</aside>
+<!-- LECTURER Sidebar -->
+<aside th:if="${userRole == 'LECTURER'}" class="w-64 bg-slate-900 text-white flex flex-col h-screen fixed left-0 top-0 z-50 shadow-2xl transition-all duration-300">
+    <div class="p-6 border-b border-white/10 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-tr from-violet-600 to-fuchsia-500 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H15"/></svg>
+            </div>
+            <span class="text-xl font-bold tracking-tight">EduPortal</span>
+        </div>
+    </div>
+    <nav class="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-hide">
+        <p class="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Lecturer Area</p>
+        <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            Dashboard
+        </a>
+        <a href="/schedules" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            My Schedule
+        </a>
+        <a href="/materials" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Course Materials
+        </a>
+        <a href="/feedbacks" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 text-sm font-medium transition-colors group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            Course Feedback
+        </a>
+    </nav>
+    <div class="p-4 border-t border-white/10 bg-slate-900/50 backdrop-blur-md">
+        <a href="/profile" class="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 mb-3 transition-colors group">
+            <div class="w-9 h-9 bg-gradient-to-tr from-violet-600 to-fuchsia-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md" th:text="${userName != null ? userName.substring(0,1) : 'L'}">L</div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-white truncate" th:text="${userName}">Lecturer</p>
+                <p class="text-xs text-slate-400 truncate">Lecturer</p>
+            </div>
+        </a>
+        <div class="flex gap-2">
+            <button onclick="toggleDarkMode()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                Theme
+            </button>
+            <a href="/logout" class="flex-1 py-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Logout
+            </a>
+        </div>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="flex-1 ml-64 p-8 relative z-10">
+    <!-- Flash Messages -->
+    <div th:if="${error}" class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm flex items-center gap-3 animate-fade-in">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span th:text="${error}"></span>
+    </div>
+    <div th:if="${success}" class="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-3 animate-fade-in">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span th:text="${success}"></span>
+    </div>
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-10 animate-fade-in flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4">
+            <div>
+                <h1 class="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">My Profile</h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-2 text-lg">Manage your personal information and account settings</p>
+            </div>
+            <div class="px-4 py-2 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                </span>
+                <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Account Active</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Profile Card -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white dark:bg-slate-800/80 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 p-8 text-center animate-fade-in" style="animation-delay: 0.1s;">
+                    <div class="w-32 h-32 mx-auto bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-3xl flex items-center justify-center text-5xl font-bold text-white shadow-xl shadow-blue-500/20 mb-6 relative group cursor-pointer" th:text="${profile != null ? profile.name.substring(0,1) : '?'}">
+                        ?
+                        <div class="absolute inset-0 bg-black/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        </div>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-1" th:text="${profile != null ? profile.name : 'Unknown'}">Name</h2>
+                    <p class="text-blue-600 dark:text-blue-400 font-medium tracking-wide uppercase text-sm mb-4" th:text="${userRole}">Role</p>
+                    
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                        <span class="text-sm font-mono text-slate-600 dark:text-slate-300" th:text="${userId}">ID</span>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800/80 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 p-6 animate-fade-in" style="animation-delay: 0.2s;">
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Security
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-slate-900 dark:text-white">Password</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Last changed recently</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-slate-800/80 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/50 p-8 animate-fade-in" style="animation-delay: 0.3s;">
+                    <form th:action="@{/profile/update}" method="post" class="space-y-8">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-2">Personal Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Full Name</label>
+                                    <input type="text" name="name" th:value="${profile != null ? profile.name : ''}" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
+                                    <input type="email" name="email" th:value="${profile != null ? profile.email : ''}" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Phone Number</label>
+                                    <input type="text" name="phone" th:value="${profile != null ? profile.phone : ''}" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Home Address</label>
+                                    <input type="text" name="address" th:value="${profile != null ? profile.address : ''}" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Student-specific -->
+                        <div th:if="${userRole == 'STUDENT'}">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-2">Academic Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Current Semester</label>
+                                    <select name="semester" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                        <option th:each="i : ${#numbers.sequence(1, 8)}" th:value="${i}" th:text="'Semester ' + ${i}" th:selected="${profile != null and profile.semester == i}"></option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Enrollment Status</label>
+                                    <div class="relative">
+                                        <input type="text" th:value="${profile != null ? profile.status : ''}" disabled class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-100/50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 cursor-not-allowed">
+                                        <svg class="w-5 h-5 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lecturer-specific -->
+                        <div th:if="${userRole == 'LECTURER'}">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-2">Professional Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Department</label>
+                                    <select name="department" id="editDept" onchange="updateSpecializations('editDept','editSpec')" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                        <option value="">Select Department</option>
+                                        <option value="Computing" th:selected="${profile != null and profile.department == 'Computing'}">Computing</option>
+                                        <option value="Engineering" th:selected="${profile != null and profile.department == 'Engineering'}">Engineering</option>
+                                        <option value="Business" th:selected="${profile != null and profile.department == 'Business'}">Business</option>
+                                        <option value="Human Science" th:selected="${profile != null and profile.department == 'Human Science'}">Human Science</option>
+                                        <option value="Health Science" th:selected="${profile != null and profile.department == 'Health Science'}">Health Science</option>
+                                        <option value="Law" th:selected="${profile != null and profile.department == 'Law'}">Law</option>
+                                        <option value="Education" th:selected="${profile != null and profile.department == 'Education'}">Education</option>
+                                        <option value="Arts &amp; Design" th:selected="${profile != null and profile.department == 'Arts & Design'}">Arts &amp; Design</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Specialization</label>
+                                    <select name="specialization" id="editSpec" th:data-selected="${profile != null ? profile.specialization : ''}" required class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                        <option value="">Select Department first</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6 border-b border-slate-100 dark:border-slate-700 pb-2">Security</h3>
+                            <div class="relative">
+                                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Change Password</label>
+                                <input type="password" name="password" placeholder="Leave blank to keep current password" class="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Enter a new password only if you wish to change your current one.</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 flex items-center justify-end gap-4">
+                            <button type="reset" class="px-6 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors">Discard Changes</button>
+                            <button type="submit" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script>
+// Prevent back button from showing cached pages after logout
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
+
+const specMap={'Computing':['Cyber Security','Networking','Data Science','Software Engineering','Artificial Intelligence','Cloud Computing','Web Development'],'Engineering':['Robotics','Civil Engineering','Mechanical Engineering','Electrical Engineering','Biomedical Engineering','Chemical Engineering'],'Business':['Marketing','Finance','Accounting','Human Resource Management','International Business','Entrepreneurship'],'Human Science':['Psychology','Sociology','Political Science','Philosophy','Linguistics','History'],'Health Science':['Nursing','Pharmacy','Public Health','Biomedical Science','Nutrition','Physiotherapy'],'Law':['Criminal Law','Corporate Law','International Law','Constitutional Law','Human Rights Law'],'Education':['Early Childhood','Primary Education','Secondary Education','Special Education','Educational Technology'],'Arts & Design':['Graphic Design','Interior Design','Animation','Fashion Design','Film & Media']};
+function updateSpecializations(deptId,specId){const dept=document.getElementById(deptId).value;const specSelect=document.getElementById(specId);specSelect.innerHTML='<option value="">Select Specialization</option>';if(specMap[dept]){specMap[dept].forEach(s=>{const opt=document.createElement('option');opt.value=s;opt.textContent=s;specSelect.appendChild(opt)})}}
+document.addEventListener('DOMContentLoaded', () => {
+    const deptSelect = document.getElementById('editDept');
+    if(deptSelect && deptSelect.value) {
+        updateSpecializations('editDept', 'editSpec');
+        const specSelect = document.getElementById('editSpec');
+        const selectedSpec = specSelect.getAttribute('data-selected');
+        if(selectedSpec) {
+            specSelect.value = selectedSpec;
+        }
+    }
+});
+
+function toggleDarkMode(){document.documentElement.classList.toggle('dark');localStorage.setItem('darkMode',document.documentElement.classList.contains('dark'))}
+if(localStorage.getItem('darkMode')==='true'){document.documentElement.classList.add('dark')}
+</script>
+</body>
+</html>

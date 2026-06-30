@@ -1,0 +1,3 @@
+A3001,Room A3001,120,true
+A1301,Room A1301,120,true
+G505,Room G505,120,true

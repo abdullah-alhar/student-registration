@@ -1,0 +1,2 @@
+A001,Admin,admin@gmail.com,0771234568,kandy,admin123,1
+ADM1779098335918,SHAN,shan@gmail.com,0754321123,colombo,s123,2
