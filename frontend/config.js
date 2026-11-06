@@ -4,5 +4,5 @@
 //  (no slash at the end), then push to GitHub.
 // =============================================================
 window.APP_CONFIG = {
-  API_URL: "https://<your-render-service>.onrender.com",
+  API_URL: "https://student-registration-36a7f.containers.snapdeploy.app",
 };

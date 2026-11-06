@@ -12,6 +12,10 @@
 /neon.ts
 node_modules/
 
+# ---------- Claude Code (local AI-assistant skills, not part of the app) ----------
+.claude/
+skills-lock.json
+
 # ---------- Old .txt data and uploaded files (contain real data / passwords) ----------
 legacy-data/
 uploads/
