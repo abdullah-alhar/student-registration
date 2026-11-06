@@ -2,8 +2,6 @@
 
 > A full-stack web application for managing student course registrations, built with **Spring Boot**, **Thymeleaf** and **PostgreSQL** (hosted free on **Neon**).
 
-**🌐 Live demo:** `https://abdullah-alhar.github.io/<your-repo-name>/` *(replace after deploying)*
-**⚙️ Backend:** `https://<your-render-service>.onrender.com` *(replace after deploying)*
 
 > ⏳ The backend runs on Render's free plan, which **sleeps after 15 minutes** without visitors.
 > The first visit shows *"Server is waking up, please wait..."* for up to a minute. That is normal.
