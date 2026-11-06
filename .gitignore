@@ -5,6 +5,11 @@
 
 # ---------- Neon CLI ----------
 .neon
+# The Neon CLI adds these Node.js files; this Java app doesn't need them, and
+# they make hosts like SnapDeploy think the repo is a Node.js project.
+/package.json
+/package-lock.json
+/neon.ts
 node_modules/
 
 # ---------- Old .txt data and uploaded files (contain real data / passwords) ----------

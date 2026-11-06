@@ -125,7 +125,6 @@ student-registration/
 │   └── static/                             # CSS / JS
 ├── Dockerfile                              # Backend image for Render
 ├── .env.example                            # Template for your local .env
-├── neon.ts                                 # Neon CLI project config
 └── pom.xml
 ```
 
