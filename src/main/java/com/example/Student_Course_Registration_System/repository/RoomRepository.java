@@ -1,114 +1,59 @@
 package com.example.Student_Course_Registration_System.repository;
 
 import com.example.Student_Course_Registration_System.model.Room;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Repository
 public class RoomRepository {
 
-    private static final String FILE_PATH = "src/main/resources/data/rooms.txt";
+    private static final String SELECT = "SELECT room_id, room_name, capacity, available FROM rooms";
 
-    // Save room to txt file
-    public void save(Room room) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(room.getRoomId() + "," +
-                    room.getRoomName() + "," +
-                    room.getCapacity() + "," +
-                    room.isAvailable());
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("Error saving room: " + e.getMessage());
-        }
+    private static final RowMapper<Room> ROW_MAPPER = (rs, rowNum) -> {
+        Room room = new Room(rs.getString("room_id"), rs.getString("room_name"), rs.getInt("capacity"));
+        room.setAvailable(rs.getBoolean("available"));
+        return room;
+    };
+
+    private final JdbcTemplate jdbc;
+
+    public RoomRepository(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
-    // Find all rooms from txt file
+    // Save new room
+    public void save(Room room) {
+        jdbc.update("INSERT INTO rooms (room_id, room_name, capacity, available) VALUES (?, ?, ?, ?)",
+                room.getRoomId(), room.getRoomName(), room.getCapacity(), room.isAvailable());
+    }
+
+    // Find all rooms
     public List<Room> findAll() {
-        List<Room> rooms = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 4) {
-                    Room room = new Room(
-                            parts[0],                          // roomId
-                            parts[1],                          // roomName
-                            Integer.parseInt(parts[2])         // capacity
-                    );
-                    room.setAvailable(Boolean.parseBoolean(parts[3]));
-                    rooms.add(room);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading rooms: " + e.getMessage());
-        }
-        return rooms;
+        return jdbc.query(SELECT + " ORDER BY created_at, room_id", ROW_MAPPER);
     }
 
     // Find room by ID
     public Room findById(String roomId) {
-        List<Room> rooms = findAll();
-        for (Room room : rooms) {
-            if (room.getRoomId().equals(roomId)) {
-                return room;
-            }
-        }
-        return null;
+        return jdbc.query(SELECT + " WHERE room_id = ?", ROW_MAPPER, roomId)
+                .stream().findFirst().orElse(null);
     }
 
     // Find all available rooms
     public List<Room> findAvailableRooms() {
-        List<Room> rooms = findAll();
-        List<Room> availableRooms = new ArrayList<>();
-        for (Room room : rooms) {
-            if (room.isAvailable()) {
-                availableRooms.add(room);
-            }
-        }
-        return availableRooms;
+        return jdbc.query(SELECT + " WHERE available = TRUE ORDER BY created_at, room_id", ROW_MAPPER);
     }
 
-    // Update room in txt file
-    public void update(Room updatedRoom) {
-        List<Room> rooms = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (Room room : rooms) {
-                if (room.getRoomId().equals(updatedRoom.getRoomId())) {
-                    writer.write(updatedRoom.getRoomId() + "," +
-                            updatedRoom.getRoomName() + "," +
-                            updatedRoom.getCapacity() + "," +
-                            updatedRoom.isAvailable());
-                } else {
-                    writer.write(room.getRoomId() + "," +
-                            room.getRoomName() + "," +
-                            room.getCapacity() + "," +
-                            room.isAvailable());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error updating room: " + e.getMessage());
-        }
+    // Update room
+    public void update(Room room) {
+        jdbc.update("UPDATE rooms SET room_name = ?, capacity = ?, available = ? WHERE room_id = ?",
+                room.getRoomName(), room.getCapacity(), room.isAvailable(), room.getRoomId());
     }
 
-    // Delete room from txt file
+    // Delete room
     public void delete(String roomId) {
-        List<Room> rooms = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (Room room : rooms) {
-                if (!room.getRoomId().equals(roomId)) {
-                    writer.write(room.getRoomId() + "," +
-                            room.getRoomName() + "," +
-                            room.getCapacity() + "," +
-                            room.isAvailable());
-                    writer.newLine();
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error deleting room: " + e.getMessage());
-        }
+        jdbc.update("DELETE FROM rooms WHERE room_id = ?", roomId);
     }
 }

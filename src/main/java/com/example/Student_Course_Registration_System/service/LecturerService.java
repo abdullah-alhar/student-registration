@@ -8,6 +8,7 @@ import com.example.Student_Course_Registration_System.repository.AdminRepository
 import com.example.Student_Course_Registration_System.repository.LecturerRepository;
 import com.example.Student_Course_Registration_System.repository.ScheduleRepository;
 import com.example.Student_Course_Registration_System.repository.StudentRepository;
+import com.example.Student_Course_Registration_System.config.PasswordHasher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,9 @@ import java.util.List;
 
 @Service
 public class LecturerService {
+
+    @Autowired
+    private PasswordHasher passwordHasher;
 
     @Autowired
     private LecturerRepository lecturerRepository;
@@ -52,6 +56,7 @@ public class LecturerService {
         // Cross-entity email check
         String crossError = checkCrossEntityEmail(lecturer.getEmail());
         if (crossError != null) return crossError;
+        lecturer.setPassword(passwordHasher.hashIfNeeded(lecturer.getPassword()));
         lecturerRepository.save(lecturer);
         return null;
     }
@@ -91,6 +96,7 @@ public class LecturerService {
         // Cross-entity email check
         String crossError = checkCrossEntityEmail(lecturer.getEmail());
         if (crossError != null) return crossError;
+        lecturer.setPassword(passwordHasher.hashIfNeeded(lecturer.getPassword()));
         lecturerRepository.update(lecturer);
         return null;
     }
@@ -139,7 +145,7 @@ public class LecturerService {
     public Lecturer login(String email, String password) {
         List<Lecturer> lecturers = lecturerRepository.findAll();
         for (Lecturer l : lecturers) {
-            if (l.getEmail().equals(email) && l.getPassword().equals(password)) {
+            if (l.getEmail().equals(email) && passwordHasher.matches(password, l.getPassword())) {
                 return l;
             }
         }

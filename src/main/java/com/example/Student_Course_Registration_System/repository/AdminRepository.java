@@ -1,129 +1,74 @@
 package com.example.Student_Course_Registration_System.repository;
 
 import com.example.Student_Course_Registration_System.model.Admin;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Repository
 public class AdminRepository {
 
-    private static final String FILE_PATH = "src/main/resources/data/admins.txt";
+    private static final String SELECT =
+            "SELECT admin_id, name, email, phone, address, password, access_level FROM admins";
 
-    // Auto generate admin ID
+    private static final RowMapper<Admin> ROW_MAPPER = (rs, rowNum) -> new Admin(
+            rs.getString("name"),
+            rs.getString("email"),
+            rs.getString("phone"),
+            rs.getString("address"),
+            rs.getString("password"),
+            rs.getString("admin_id"),
+            rs.getInt("access_level"));
+
+    private final JdbcTemplate jdbc;
+
+    public AdminRepository(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
+    }
+
+    // Auto generate admin ID (A001, A002, ...)
     public String generateId() {
-        List<Admin> admins = findAll();
         int max = 0;
-        for (Admin a : admins) {
+        for (String id : jdbc.queryForList("SELECT admin_id FROM admins", String.class)) {
             try {
-                int num = Integer.parseInt(a.getAdminId().replace("A", ""));
+                int num = Integer.parseInt(id.replace("A", ""));
                 if (num > max) max = num;
             } catch (NumberFormatException ignored) {}
         }
         return String.format("A%03d", max + 1);
     }
 
-    // Save admin to txt file
-    public void save(Admin admin) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(admin.getAdminId() + "," +
-                    admin.getName() + "," +
-                    admin.getEmail() + "," +
-                    admin.getPhone() + "," +
-                    admin.getAddress() + "," +
-                    admin.getPassword() + "," +
-                    admin.getAccessLevel());
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("Error saving admin: " + e.getMessage());
-        }
+    // Save new admin
+    public void save(Admin a) {
+        jdbc.update("INSERT INTO admins (admin_id, name, email, phone, address, password, access_level) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                a.getAdminId(), a.getName(), a.getEmail(), a.getPhone(), a.getAddress(),
+                a.getPassword(), a.getAccessLevel());
     }
 
-    // Find all admins from txt file
+    // Find all admins
     public List<Admin> findAll() {
-        List<Admin> admins = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 7) {
-                    Admin admin = new Admin(
-                            parts[1], // name
-                            parts[2], // email
-                            parts[3], // phone
-                            parts[4], // address
-                            parts[5], // password
-                            parts[0], // adminId
-                            Integer.parseInt(parts[6]) // accessLevel
-                    );
-                    admins.add(admin);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading admins: " + e.getMessage());
-        }
-        return admins;
+        return jdbc.query(SELECT + " ORDER BY created_at, admin_id", ROW_MAPPER);
     }
 
     // Find admin by ID
     public Admin findById(String adminId) {
-        for (Admin admin : findAll()) {
-            if (admin.getAdminId().equals(adminId)) {
-                return admin;
-            }
-        }
-        return null;
+        return jdbc.query(SELECT + " WHERE admin_id = ?", ROW_MAPPER, adminId)
+                .stream().findFirst().orElse(null);
     }
 
-    // Update admin in txt file
-    public void update(Admin updatedAdmin) {
-        List<Admin> admins = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (Admin admin : admins) {
-                if (admin.getAdminId().equals(updatedAdmin.getAdminId())) {
-                    writer.write(updatedAdmin.getAdminId() + "," +
-                            updatedAdmin.getName() + "," +
-                            updatedAdmin.getEmail() + "," +
-                            updatedAdmin.getPhone() + "," +
-                            updatedAdmin.getAddress() + "," +
-                            updatedAdmin.getPassword() + "," +
-                            updatedAdmin.getAccessLevel());
-                } else {
-                    writer.write(admin.getAdminId() + "," +
-                            admin.getName() + "," +
-                            admin.getEmail() + "," +
-                            admin.getPhone() + "," +
-                            admin.getAddress() + "," +
-                            admin.getPassword() + "," +
-                            admin.getAccessLevel());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error updating admin: " + e.getMessage());
-        }
+    // Update admin
+    public void update(Admin a) {
+        jdbc.update("UPDATE admins SET name = ?, email = ?, phone = ?, address = ?, password = ?, "
+                        + "access_level = ? WHERE admin_id = ?",
+                a.getName(), a.getEmail(), a.getPhone(), a.getAddress(), a.getPassword(),
+                a.getAccessLevel(), a.getAdminId());
     }
 
-    // Delete admin from txt file
+    // Delete admin
     public void delete(String adminId) {
-        List<Admin> admins = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (Admin admin : admins) {
-                if (!admin.getAdminId().equals(adminId)) {
-                    writer.write(admin.getAdminId() + "," +
-                            admin.getName() + "," +
-                            admin.getEmail() + "," +
-                            admin.getPhone() + "," +
-                            admin.getAddress() + "," +
-                            admin.getPassword() + "," +
-                            admin.getAccessLevel());
-                    writer.newLine();
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error deleting admin: " + e.getMessage());
-        }
+        jdbc.update("DELETE FROM admins WHERE admin_id = ?", adminId);
     }
 }

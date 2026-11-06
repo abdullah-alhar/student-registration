@@ -1,0 +1,26 @@
+# ---------- Secrets (NEVER commit these) ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Neon CLI ----------
+.neon
+node_modules/
+
+# ---------- Old .txt data and uploaded files (contain real data / passwords) ----------
+legacy-data/
+uploads/
+src/main/resources/data/
+
+# ---------- Build output ----------
+target/
+*.class
+*.jar
+*.log
+
+# ---------- IDE / OS ----------
+.idea/
+*.iml
+.vscode/
+.DS_Store
+**/.DS_Store

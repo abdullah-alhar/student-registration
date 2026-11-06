@@ -1,57 +1,65 @@
 # 🎓 Student Course Registration System
 
-> A full-stack web application for managing student course registrations, built with **Spring Boot**, **Thymeleaf**, and **file-based data persistence**.
+> A full-stack web application for managing student course registrations, built with **Spring Boot**, **Thymeleaf** and **PostgreSQL** (hosted free on **Neon**).
 
+**🌐 Live demo:** `https://abdullah-alhar.github.io/<your-repo-name>/` *(replace after deploying)*
+**⚙️ Backend:** `https://<your-render-service>.onrender.com` *(replace after deploying)*
 
+> ⏳ The backend runs on Render's free plan, which **sleeps after 15 minutes** without visitors.
+> The first visit shows *"Server is waking up, please wait..."* for up to a minute. That is normal.
+
+---
 
 ## 📋 Table of Contents
 
 - [About the Project](#-about-the-project)
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
-- [OOP Concepts Used](#-oop-concepts-used)
+- [How It Is Hosted](#-how-it-is-hosted)
 - [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [Usage](#-usage)
+- [Run It on Your Computer](#-run-it-on-your-computer)
+- [Deploy It Online (Neon + Render + GitHub Pages)](#-deploy-it-online-neon--render--github-pages)
+- [Import the Old .txt Data](#-import-the-old-txt-data-one-time)
+- [Environment Variables](#-environment-variables)
+- [Troubleshooting](#-troubleshooting)
+- [OOP Concepts Used](#-oop-concepts-used)
 - [User Roles](#-user-roles)
-- [Data Models](#-data-models)
 
 ---
 
 ## 📖 About the Project
 
-The **Student Course Registration System** is a web-based platform that streamlines the process of managing students, lecturers, courses, and registrations within an academic institution. It provides a role-based interface where **Admins**, **Students**, and **Lecturers** each have dedicated access and capabilities.
+The **Student Course Registration System** is a web platform for managing students, lecturers, courses and registrations in an academic institution. **Admins**, **Students** and **Lecturers** each get their own screens and permissions.
 
-Data is stored using **flat `.txt` files** (no database required), making it lightweight and easy to run locally without any extra setup.
+All data (including uploaded receipts and course materials) is stored in a **PostgreSQL database**, so nothing is lost when the free server restarts. Passwords are stored as **BCrypt hashes**, never as plain text.
 
 ---
 
 ## ✨ Features
 
 ### 👨‍💼 Admin
-- Manage students, lecturers, and admins
+- Manage students, lecturers and admins
 - Approve or reject course registrations
 - Verify and process student payments
-- Manage course categories, rooms, and schedules
+- Manage course categories, rooms and schedules
 - Upload and manage course materials
 
 ### 👨‍🎓 Student
 - Register for available courses
 - View registration status (Pending / Approved / Rejected)
-- Make payments and upload payment receipts
+- Make payments and upload payment receipts (PDF)
 - View course schedules and materials
 - Update personal profile
 
 ### 👨‍🏫 Lecturer
-- View assigned courses and student lists
-- Access course schedules and rooms
+- View assigned courses and schedules
 - Upload course materials
 - View student feedback
 
-### 🔐 Authentication
-- Session-based login system with role-based access control
-- Route protection via a custom `AuthInterceptor`
-- Secure logout with session invalidation
+### 🔐 Security
+- Session-based login with role-based access (custom `AuthInterceptor`)
+- Passwords hashed with **BCrypt** (`BCryptPasswordEncoder`)
+- Database password and URLs read from **environment variables**, never written in the code
 
 ---
 
@@ -59,192 +67,217 @@ Data is stored using **flat `.txt` files** (no database required), making it lig
 
 | Layer | Technology |
 |---|---|
-| Backend | Java 21, Spring Boot 4.0.5 |
-| Frontend | Thymeleaf, HTML5, CSS3, JavaScript |
-| Build Tool | Apache Maven |
-| Data Storage | Flat file (`.txt`) – no database required |
-| File Handling | Apache Commons IO |
-| Dev Tools | Spring Boot DevTools |
+| Backend | Java 21, Spring Boot 4, Spring MVC, Thymeleaf |
+| Database | PostgreSQL on **Neon** (free), accessed with Spring `JdbcTemplate` + HikariCP |
+| Passwords | Spring Security Crypto (`BCryptPasswordEncoder`) |
+| Frontend landing page | Static HTML/JS on **GitHub Pages** |
+| Backend hosting | **Render** (free plan, Docker) |
+| CI/CD | GitHub Actions (deploys the frontend to Pages) |
+| Build | Apache Maven |
 
 ---
 
-## 🧠 OOP Concepts Used
+## 🏗 How It Is Hosted
 
-This project is designed to demonstrate core **Object-Oriented Programming** principles:
+```
+  Visitor
+     │
+     ▼
+ GitHub Pages  (abdullah-alhar.github.io/<your-repo-name>)
+  frontend/index.html  ──►  checks  GET /health  every 3 s
+     │                       ("Server is waking up, please wait...")
+     │  when the server answers
+     ▼
+ Render  (Docker, Spring Boot app: all pages, login, uploads)
+     │
+     ▼
+ Neon  (PostgreSQL: all data + uploaded files)
+```
 
-| Concept | Implementation |
-|---|---|
-| **Abstraction** | `Person` is an abstract class with `getDetails()` as an abstract method |
-| **Inheritance** | `Student`, `Lecturer`, and `Admin` extend `Person` |
-| **Encapsulation** | All fields are `private`; exposed only through controlled getters/setters |
-| **Polymorphism** | `getDetails()` is overridden in each subclass differently |
-| **Composition** | `Course` owns a `CourseCategory`; `Registration` links `Student` and `Course` |
+- **GitHub Pages** hosts a small static page. It wakes the backend and then sends the visitor to the login page.
+- **Render** runs the full Spring Boot app (all 14 pages, login, file uploads).
+- **Neon** keeps the data safe. Free hosts wipe their disk on restart, so nothing is kept in files.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-Student-Course-Registration-System/
-│
-├── src/
-│   ├── main/
-│   │   ├── java/com/example/Student_Course_Registration_System/
-│   │   │   │
-│   │   │   ├── StudentCourseRegistrationSystemApplication.java   # Entry point
-│   │   │   │
-│   │   │   ├── config/
-│   │   │   │   └── WebConfig.java                               # MVC & interceptor config
-│   │   │   │
-│   │   │   ├── interceptor/
-│   │   │   │   └── AuthInterceptor.java                         # Session-based auth guard
-│   │   │   │
-│   │   │   ├── model/                                           # Domain models (OOP)
-│   │   │   │   ├── Person.java          (abstract base class)
-│   │   │   │   ├── Student.java
-│   │   │   │   ├── Lecturer.java
-│   │   │   │   ├── Admin.java
-│   │   │   │   ├── Course.java
-│   │   │   │   ├── CourseCategory.java
-│   │   │   │   ├── CourseMaterial.java
-│   │   │   │   ├── Registration.java
-│   │   │   │   ├── Payment.java
-│   │   │   │   ├── Schedule.java
-│   │   │   │   ├── Room.java
-│   │   │   │   └── Feedback.java
-│   │   │   │
-│   │   │   ├── enums/                                           # Status enumerations
-│   │   │   │   ├── Role.java            (STUDENT, LECTURER, ADMIN)
-│   │   │   │   ├── RegistrationStatus.java (PENDING, APPROVED, REJECTED)
-│   │   │   │   ├── PaymentStatus.java   (PENDING, COMPLETED, FAILED)
-│   │   │   │   └── PaymentMethod.java
-│   │   │   │
-│   │   │   ├── repository/                                      # File-based data access layer
-│   │   │   │   ├── StudentRepository.java
-│   │   │   │   ├── CourseRepository.java
-│   │   │   │   ├── LecturerRepository.java
-│   │   │   │   ├── AdminRepository.java
-│   │   │   │   ├── RegistrationRepository.java
-│   │   │   │   ├── PaymentRepository.java
-│   │   │   │   ├── ScheduleRepository.java
-│   │   │   │   ├── RoomRepository.java
-│   │   │   │   ├── FeedbackRepository.java
-│   │   │   │   ├── CourseCategoryRepository.java
-│   │   │   │   └── CourseMaterialRepository.java
-│   │   │   │
-│   │   │   ├── service/                                         # Business logic layer
-│   │   │   │   ├── StudentService.java
-│   │   │   │   ├── CourseService.java
-│   │   │   │   ├── LecturerService.java
-│   │   │   │   ├── AdminService.java
-│   │   │   │   ├── RegistrationService.java
-│   │   │   │   ├── PaymentService.java
-│   │   │   │   ├── ScheduleService.java
-│   │   │   │   ├── RoomService.java
-│   │   │   │   ├── FeedbackService.java
-│   │   │   │   ├── CourseCategoryService.java
-│   │   │   │   └── CourseMaterialService.java
-│   │   │   │
-│   │   │   └── controller/                                      # HTTP request handlers
-│   │   │       ├── StudentController.java
-│   │   │       ├── CourseController.java
-│   │   │       ├── LecturerController.java
-│   │   │       ├── AdminController.java
-│   │   │       ├── RegistrationController.java
-│   │   │       ├── PaymentController.java
-│   │   │       ├── ScheduleController.java
-│   │   │       ├── RoomController.java
-│   │   │       ├── FeedbackController.java
-│   │   │       ├── CourseCategoryController.java
-│   │   │       └── CourseMaterialController.java
-│   │   │
-│   │   └── resources/
-│   │       ├── application.properties                           # App configuration
-│   │       ├── data/                                            # Flat file storage (.txt)
-│   │       │   ├── students.txt
-│   │       │   ├── courses.txt
-│   │       │   ├── lecturers.txt
-│   │       │   ├── admins.txt
-│   │       │   ├── registrations.txt
-│   │       │   ├── payments.txt
-│   │       │   ├── schedules.txt
-│   │       │   ├── rooms.txt
-│   │       │   ├── feedbacks.txt
-│   │       │   ├── courseCategories.txt
-│   │       │   └── courseMaterials.txt
-│   │       ├── static/
-│   │       │   ├── css/style.css
-│   │       │   └── js/main.js
-│   │       └── templates/                                       # Thymeleaf HTML views
-│   │           ├── login.html
-│   │           ├── dashboard.html
-│   │           ├── student.html
-│   │           ├── course.html
-│   │           ├── lecturer.html
-│   │           ├── admin.html
-│   │           ├── registration.html
-│   │           ├── payment.html
-│   │           ├── schedule.html
-│   │           ├── room.html
-│   │           ├── feedback.html
-│   │           ├── category.html
-│   │           ├── material.html
-│   │           └── profile.html
-│   │
-│   └── test/
-│       └── java/.../StudentCourseRegistrationSystemApplicationTests.java
-│
-├── uploads/
-│   ├── materials/      # Uploaded course material files
-│   └── payments/       # Uploaded payment receipt images
-│
-├── pom.xml             # Maven project configuration
-└── README.md
+student-registration/
+├── .github/workflows/deploy-frontend.yml   # Publishes frontend/ to GitHub Pages
+├── frontend/                               # Static site for GitHub Pages
+│   ├── index.html                          #   "Server is waking up..." page
+│   └── config.js                           #   ← the ONE place to set the backend URL
+├── src/main/java/com/example/Student_Course_Registration_System/
+│   ├── config/
+│   │   ├── DatabaseConfig.java             # Reads DATABASE_URL, creates tables
+│   │   ├── PasswordHasher.java             # BCrypt hashing / checking
+│   │   └── WebConfig.java                  # Login guard + CORS
+│   ├── controller/                         # Web pages (+ HealthController: /health)
+│   ├── service/                            # Business rules
+│   ├── repository/                         # ALL database code (SQL) lives here
+│   ├── importer/LegacyTxtImporter.java     # One-time .txt → database import
+│   ├── model/  enums/  interceptor/
+├── src/main/resources/
+│   ├── schema.sql                          # Database tables
+│   ├── application.properties              # Settings (secrets come from env vars)
+│   ├── templates/                          # Thymeleaf pages
+│   └── static/                             # CSS / JS
+├── Dockerfile                              # Backend image for Render
+├── .env.example                            # Template for your local .env
+├── neon.ts                                 # Neon CLI project config
+└── pom.xml
 ```
 
 ---
 
-## 🚀 Getting Started
+## 💻 Run It on Your Computer
 
-### Prerequisites
+**You need:** Java 21+, Maven 3.9+, and a Neon account (free). Node.js is optional (only for the Neon CLI).
 
-Make sure you have the following installed:
-
-- **Java 21** or higher — [Download](https://www.oracle.com/java/technologies/downloads/)
-- **Maven 3.x** — [Download](https://maven.apache.org/download.cgi) *(or use the included `mvnw` wrapper)*
-
-### Installation & Run
-
-1. **Clone the repository**
+1. **Clone the project**
    ```bash
-   git clone https://github.com/your-username/Student-Course-Registration-System.git
-   cd Student-Course-Registration-System
+   git clone https://github.com/abdullah-alhar/<your-repo-name>.git
+   cd <your-repo-name>
    ```
 
-2. **Build and run the application**
-   ```bash
-   # Using Maven Wrapper (no Maven installation needed)
-   ./mvnw spring-boot:run
+2. **Give the app your database address.** Pick one option:
+   - **Option A: Neon CLI** (writes `.env.local` for you):
+     ```bash
+     npx neon@latest login
+     npx neon@latest env pull
+     ```
+   - **Option B: by hand:** copy the template and paste your Neon connection strings into it:
+     ```bash
+     cp .env.example .env
+     ```
 
-   # OR using Maven directly
+3. **Start the app**
+   ```bash
    mvn spring-boot:run
    ```
+   On first start the app creates all tables automatically (from `schema.sql`).
 
-3. **Open your browser and visit**
-   ```
-   http://localhost:8080
-   ```
+4. Open **http://localhost:8080** and log in.
 
-> **Note:** No database setup is needed. Data is stored automatically in `.txt` files under `src/main/resources/data/`.
+> `.env` and `.env.local` are in `.gitignore`. Never commit them.
+> (The `mvnw` wrapper in this repo is incomplete, so use `mvn` directly.)
 
 ---
 
-## 💻 Usage
+## 🚀 Deploy It Online (Neon + Render + GitHub Pages)
 
-1. Navigate to `http://localhost:8080/login`
-2. Log in using your credentials (Admin, Student, or Lecturer)
-3. You will be redirected to the **Dashboard** based on your role
-4. Use the navigation menu to access the relevant modules
+Do the three parts **in this order**.
+
+### Part 1: Neon (database)
+
+1. Sign up at **https://neon.tech** (free) and create a project. *(Already done for this project: `still-dream-99108855`.)*
+2. In the Neon dashboard click **Connect**.
+3. Copy **two** connection strings:
+   - **Pooled**: with *Connection pooling* **ON** (the host contains `-pooler`). This becomes `DATABASE_URL`.
+   - **Direct**: with *Connection pooling* **OFF** (no `-pooler`). This becomes `DATABASE_URL_UNPOOLED`.
+
+   They look like: `postgresql://neondb_owner:xxxx@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require`
+4. Keep them somewhere private. You need them in Part 2.
+
+> Why two? The running app uses the **pooled** one. Creating tables and importing data use the **direct** one, which is what Neon recommends.
+
+### Part 2: Render (backend)
+
+1. Push this project to GitHub (without `.env` files: they are ignored automatically).
+2. Sign up at **https://render.com** with your GitHub account.
+3. Click **New → Web Service** and pick this repository.
+4. Fill in:
+   | Setting | Value |
+   |---|---|
+   | Language / Runtime | **Docker** (it finds the `Dockerfile`) |
+   | Branch | `main` |
+   | Instance type | **Free** |
+   | Health Check Path | `/health` *(under "Advanced")* |
+5. Under **Environment Variables** add:
+   | Key | Value |
+   |---|---|
+   | `DATABASE_URL` | your **pooled** Neon string |
+   | `DATABASE_URL_UNPOOLED` | your **direct** Neon string |
+   | `ALLOWED_ORIGINS` | `https://abdullah-alhar.github.io` |
+   | `SESSION_COOKIE_SECURE` | `true` |
+
+   *(Don't set `PORT`: Render sets it for you.)*
+6. Click **Create Web Service**. The first build takes ~5–10 minutes.
+7. When it says **Live**, open `https://<your-service>.onrender.com/health`. You should see `{"status":"UP"}`.
+   Then open `/health/db`. You should see `"database":"UP"`.
+
+### Part 3: GitHub Pages (frontend)
+
+1. Open **`frontend/config.js`** and put in your Render URL (no `/` at the end):
+   ```js
+   window.APP_CONFIG = { API_URL: "https://<your-service>.onrender.com" };
+   ```
+2. Commit and push to `main`.
+3. On GitHub: **Settings → Pages → Build and deployment → Source: "GitHub Actions"**.
+4. Go to the **Actions** tab. The workflow *"Deploy frontend to GitHub Pages"* runs (or click **Run workflow**).
+5. Visit **`https://abdullah-alhar.github.io/<your-repo-name>/`**. You'll see *"Server is waking up, please wait..."*, and then the login page opens.
+6. Put both links at the top of this README.
+
+---
+
+## 📥 Import the Old .txt Data (one time)
+
+The old data files were moved to `legacy-data/` (git-ignored because they contain the old plain-text passwords).
+The importer copies them into the database and **hashes every password with BCrypt**.
+
+```bash
+# make sure .env / .env.local points to the database you want to fill, then:
+mvn spring-boot:run -Dspring-boot.run.profiles=import
+```
+
+- It prints how many rows were added per table, then stops.
+- Running it twice is safe: rows that already exist are skipped.
+- It's all-or-nothing: if anything fails, nothing is saved.
+- Everyone can then log in with their **old** password.
+- Using the Neon CLI? Run `npx neon@latest checkout production` first so `.env.local` points to the production branch.
+
+After a successful import you can delete `legacy-data/` (keep a private backup if you like).
+
+---
+
+## 🔑 Environment Variables
+
+| Name | Needed? | What it is |
+|---|---|---|
+| `DATABASE_URL` | **Yes** | Neon **pooled** connection string (used by the app) |
+| `DATABASE_URL_UNPOOLED` | Recommended | Neon **direct** connection string (creating tables, import). Falls back to `DATABASE_URL`. |
+| `ALLOWED_ORIGINS` | No | Websites allowed to call the backend. Default `https://abdullah-alhar.github.io` |
+| `SESSION_COOKIE_SECURE` | On Render | `true` = login cookie only over HTTPS. Leave unset locally. |
+| `PORT` | No | Set by Render automatically. Default `8080`. |
+| `DB_USERNAME` / `DB_PASSWORD` | Only for `jdbc:` URLs | For a local PostgreSQL with a `jdbc:postgresql://...` URL |
+| `JAVA_OPTS` | No | Override Java memory flags (see `Dockerfile`) |
+
+---
+
+## 🩺 Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Page stays on *"Server is waking up"* for minutes | Open the Render dashboard → **Logs**. Usually a wrong `DATABASE_URL`. |
+| `/health/db` says `DOWN` | Check both Neon strings on Render (no spaces, full string including `?sslmode=require...`). |
+| App says `DATABASE_URL is not set` | Create `.env` from `.env.example`, or run `npx neon@latest env pull`. |
+| Can't log in after import | Use the **old** password; the import hashed it, it did not change it. |
+| GitHub Pages shows 404 | Settings → Pages → Source must be **GitHub Actions**; check the Actions tab for errors. |
+| *"Backend address is not set yet"* | Edit `frontend/config.js` and push again. |
+| Render runs out of memory | Memory is already limited in the `Dockerfile` (`-XX:MaxRAMPercentage=75`). Check the Render logs. |
+
+---
+
+## 🧠 OOP Concepts Used
+
+| Concept | Implementation |
+|---|---|
+| **Abstraction** | `Person` is an abstract class with `getDetails()` as an abstract method |
+| **Inheritance** | `Student`, `Lecturer` and `Admin` extend `Person` |
+| **Encapsulation** | All fields are `private`; exposed only through controlled getters/setters |
+| **Polymorphism** | `getDetails()` is overridden in each subclass |
+| **Composition** | `Course` owns a `CourseCategory`; `Registration` links `Student` and `Course` |
 
 ---
 
@@ -252,36 +285,14 @@ Make sure you have the following installed:
 
 | Role | Access |
 |---|---|
-| **Admin** | Full access — manage all entities, approve registrations, verify payments |
-| **Lecturer** | View assigned courses, schedules, upload materials, view feedback |
+| **Admin** | Full access: manage everything, approve registrations, verify payments |
+| **Lecturer** | View courses and schedules, upload materials, view feedback |
 | **Student** | Register for courses, make payments, view schedule, update profile |
 
-> Access is enforced via session-based authentication. Unauthenticated users are automatically redirected to the login page.
-
----
-
-## 🗂 Data Models
-
-| Model | Key Fields |
-|---|---|
-| `Student` | studentId, name, email, semester, status |
-| `Lecturer` | lecturerId, name, email, specialization |
-| `Admin` | adminId, name, email, role |
-| `Course` | courseId, courseName, credits, maxStudents, enrolledStudents |
-| `CourseCategory` | categoryId, categoryName |
-| `Registration` | registrationId, student, course, status (PENDING/APPROVED/REJECTED) |
-| `Payment` | paymentId, student, amount, method, status (PENDING/COMPLETED/FAILED) |
-| `Schedule` | scheduleId, course, lecturer, room, day, time |
-| `Room` | roomId, roomName, capacity |
-| `CourseMaterial` | materialId, course, fileName, uploadDate |
-| `Feedback` | feedbackId, student, course, comment, rating |
+Unauthenticated users are automatically redirected to the login page.
 
 ---
 
 ## 📄 License
 
 This project was developed for academic purposes as part of a university assignment.
-
----
-
-

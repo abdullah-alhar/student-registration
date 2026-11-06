@@ -4,6 +4,7 @@ import com.example.Student_Course_Registration_System.enums.PaymentStatus;
 import com.example.Student_Course_Registration_System.model.Payment;
 import com.example.Student_Course_Registration_System.model.Student;
 import com.example.Student_Course_Registration_System.repository.PaymentRepository;
+import com.example.Student_Course_Registration_System.repository.UploadedFileRepository.StoredFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -145,5 +146,10 @@ public class PaymentService {
             }
         }
         return completed;
+    }
+
+    // Load the uploaded payment receipt from the database (null if missing)
+    public StoredFile getReceiptFile(String fileName) {
+        return paymentRepository.loadUploadedFile(fileName);
     }
 }

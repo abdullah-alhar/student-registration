@@ -51,6 +51,10 @@ public class Course {
     public void setMaxStudents(int maxStudents) {
         this.maxStudents = maxStudents;
     }
+    // Used by CourseRepository to restore the saved enrolled count from the database
+    public void setEnrolledStudents(int enrolledStudents) {
+        this.enrolledStudents = enrolledStudents;
+    }
 
     // check the course has avialble seat or not
     public boolean isAvailable() {

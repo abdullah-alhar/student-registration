@@ -25,6 +25,12 @@ public class Registration {
     public String getRegistrationDate() { return registrationDate; }
     public RegistrationStatus getStatus() { return status; }
 
+    // Used by RegistrationRepository when loading a saved row: sets the status
+    // without changing the course's enrolled count (that count is already saved).
+    public void restoreStatus(String savedStatus) {
+        this.status = RegistrationStatus.valueOf(savedStatus);
+    }
+
     // Status changing to approve method
     public void approve() {
         if (status == RegistrationStatus.PENDING) {

@@ -6,6 +6,7 @@ import com.example.Student_Course_Registration_System.model.Student;
 import com.example.Student_Course_Registration_System.repository.AdminRepository;
 import com.example.Student_Course_Registration_System.repository.LecturerRepository;
 import com.example.Student_Course_Registration_System.repository.StudentRepository;
+import com.example.Student_Course_Registration_System.config.PasswordHasher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,9 @@ import java.util.List;
 
 @Service
 public class AdminService {
+
+    @Autowired
+    private PasswordHasher passwordHasher;
 
     @Autowired
     private AdminRepository adminRepository;
@@ -47,6 +51,7 @@ public class AdminService {
         // Cross-entity email check
         String crossError = checkCrossEntityEmail(admin.getEmail());
         if (crossError != null) return crossError;
+        admin.setPassword(passwordHasher.hashIfNeeded(admin.getPassword()));
         adminRepository.save(admin);
         return null;
     }
@@ -86,6 +91,7 @@ public class AdminService {
         // Cross-entity email check
         String crossError = checkCrossEntityEmail(admin.getEmail());
         if (crossError != null) return crossError;
+        admin.setPassword(passwordHasher.hashIfNeeded(admin.getPassword()));
         adminRepository.update(admin);
         return null;
     }
@@ -110,7 +116,7 @@ public class AdminService {
         List<Admin> admins = adminRepository.findAll();
         for (Admin admin : admins) {
             if (admin.getEmail().equals(email) &&
-                    admin.getPassword().equals(password)) {
+                    passwordHasher.matches(password, admin.getPassword())) {
                 return admin;
             }
         }

@@ -34,6 +34,10 @@ public abstract class Person {
     public void setAddress(String address) {
         this.address = address;
     }
+    // Used by the services to replace a plain password with its BCrypt hash before saving
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     public void changePassword(String oldPassword, String newPassword) {
         if (this.password.equals(oldPassword)) {

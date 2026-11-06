@@ -5,8 +5,7 @@ import com.example.Student_Course_Registration_System.model.Student;
 import com.example.Student_Course_Registration_System.service.PaymentService;
 import com.example.Student_Course_Registration_System.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
+import com.example.Student_Course_Registration_System.repository.UploadedFileRepository.StoredFile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpSession;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Controller
 public class PaymentController {
@@ -31,8 +27,6 @@ public class PaymentController {
 
     @Autowired
     private com.example.Student_Course_Registration_System.service.LecturerService lecturerService;
-
-    private static final String UPLOAD_PATH = "uploads/payments/";
 
     @GetMapping("/payments")
     public String getAllPayments(Model model, HttpSession session) {
@@ -116,31 +110,27 @@ public class PaymentController {
 
     // ✅ FIXED: Added Content-Type header so browser renders PDF correctly instead of raw text
     @GetMapping("/payments/receipt/{paymentId}")
-    public ResponseEntity<Resource> viewReceipt(@PathVariable String paymentId) {
+    public ResponseEntity<byte[]> viewReceipt(@PathVariable String paymentId) {
         Payment payment = paymentService.getPaymentById(paymentId);
         if (payment == null || payment.getReceiptFileName() == null
                 || payment.getReceiptFileName().isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+        // Receipts are stored in the database (free hosts wipe the disk on restart)
+        StoredFile file = paymentService.getReceiptFile(payment.getReceiptFileName());
+        if (file == null) {
+            return ResponseEntity.notFound().build();
+        }
+        String contentType = file.contentType();
+        if (contentType == null || contentType.isBlank()) {
+            contentType = "application/pdf"; // safe fallback since only PDFs are accepted
+        }
         try {
-            Path filePath = Paths.get(UPLOAD_PATH).toAbsolutePath().resolve(payment.getReceiptFileName());
-            Resource resource = new UrlResource(filePath.toUri());
-            if (!resource.exists()) {
-                return ResponseEntity.notFound().build();
-            }
-
-            // Detect actual content type from the file (e.g. application/pdf)
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
-                contentType = "application/pdf"; // safe fallback since only PDFs are accepted
-            }
-
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             "inline; filename=\"" + payment.getReceiptFileName() + "\"")
-                    .body(resource);
-
+                    .body(file.data());
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }

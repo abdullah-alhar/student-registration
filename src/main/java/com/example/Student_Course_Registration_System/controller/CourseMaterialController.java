@@ -6,8 +6,7 @@ import com.example.Student_Course_Registration_System.service.CourseMaterialServ
 import com.example.Student_Course_Registration_System.service.CourseService;
 import com.example.Student_Course_Registration_System.service.RegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
+import com.example.Student_Course_Registration_System.repository.UploadedFileRepository.StoredFile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpSession;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -38,8 +34,6 @@ public class CourseMaterialController {
 
     @Autowired
     private RegistrationService registrationService;
-
-    private static final String MATERIAL_UPLOAD_PATH = "uploads/materials/";
 
     // View materials — students only see materials for their registered courses
     @GetMapping("/materials")
@@ -148,7 +142,7 @@ public class CourseMaterialController {
 
     // Download/view material file
     @GetMapping("/materials/download/{materialId}")
-    public ResponseEntity<Resource> downloadMaterial(@PathVariable String materialId,
+    public ResponseEntity<byte[]> downloadMaterial(@PathVariable String materialId,
                                                      HttpSession session) {
         String role = (String) session.getAttribute("userRole");
         if (role == null) {
@@ -162,16 +156,15 @@ public class CourseMaterialController {
         }
 
         try {
-            Path filePath = Paths.get(MATERIAL_UPLOAD_PATH).toAbsolutePath()
-                    .resolve(material.getFileName());
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (!resource.exists()) {
+            // Material files are stored in the database (free hosts wipe the disk on restart)
+            StoredFile file = courseMaterialService.getMaterialFile(material.getFileName());
+            if (file == null) {
                 return ResponseEntity.notFound().build();
             }
 
-            String contentType = Files.probeContentType(filePath);
-            if (contentType == null) {
+            String contentType = file.contentType();
+            if (contentType == null || contentType.isBlank()
+                    || contentType.equals("application/octet-stream")) {
                 String name = material.getFileName().toLowerCase();
                 if (name.endsWith(".pdf"))       contentType = "application/pdf";
                 else if (name.endsWith(".pptx")) contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
@@ -191,7 +184,7 @@ public class CourseMaterialController {
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION,
                             disposition + "; filename=\"" + material.getFileName() + "\"")
-                    .body(resource);
+                    .body(file.data());
 
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();

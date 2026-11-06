@@ -2,6 +2,7 @@ package com.example.Student_Course_Registration_System.service;
 
 import com.example.Student_Course_Registration_System.model.CourseMaterial;
 import com.example.Student_Course_Registration_System.repository.CourseMaterialRepository;
+import com.example.Student_Course_Registration_System.repository.UploadedFileRepository.StoredFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -106,5 +107,10 @@ public class CourseMaterialService {
     // Get total material count
     public int getTotalMaterials() {
         return courseMaterialRepository.findAll().size();
+    }
+
+    // Load the uploaded course material file from the database (null if missing)
+    public StoredFile getMaterialFile(String fileName) {
+        return courseMaterialRepository.loadUploadedFile(fileName);
     }
 }

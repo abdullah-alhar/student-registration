@@ -3,152 +3,86 @@ package com.example.Student_Course_Registration_System.repository;
 import com.example.Student_Course_Registration_System.model.Course;
 import com.example.Student_Course_Registration_System.model.Feedback;
 import com.example.Student_Course_Registration_System.model.Student;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Repository
 public class FeedbackRepository {
 
-    private static final String FILE_PATH = "src/main/resources/data/feedbacks.txt";
-    private final StudentRepository studentRepository = new StudentRepository();
-    private final CourseRepository courseRepository = new CourseRepository();
+    private static final String SELECT =
+            "SELECT feedback_id, student_id, course_id, rating, comment, feedback_date, submitted FROM feedbacks";
 
-    // Save feedback to txt file
-    public void save(Feedback feedback) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(feedback.getFeedbackId() + "," +
-                    feedback.getStudent().getStudentId() + "," +
-                    feedback.getCourse().getCourseId() + "," +
-                    feedback.getRating() + "," +
-                    feedback.getComment() + "," +
-                    feedback.getDate() + "," +
-                    feedback.isSubmitted());
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("Error saving feedback: " + e.getMessage());
-        }
+    private final JdbcTemplate jdbc;
+    private final StudentRepository studentRepository;
+    private final CourseRepository courseRepository;
+
+    public FeedbackRepository(JdbcTemplate jdbc, StudentRepository studentRepository,
+                              CourseRepository courseRepository) {
+        this.jdbc = jdbc;
+        this.studentRepository = studentRepository;
+        this.courseRepository = courseRepository;
     }
 
-    // Find all feedbacks from txt file
+    // Save new feedback
+    public void save(Feedback f) {
+        jdbc.update("INSERT INTO feedbacks (feedback_id, student_id, course_id, rating, comment, feedback_date, "
+                        + "submitted) VALUES (?, ?, ?, ?, ?, CAST(? AS DATE), ?)",
+                f.getFeedbackId(), f.getStudent().getStudentId(), f.getCourse().getCourseId(),
+                f.getRating(), f.getComment(), f.getDate(), f.isSubmitted());
+    }
+
+    // Find all feedbacks
     public List<Feedback> findAll() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length >= 7) {
-                    Student student = studentRepository.findById(parts[1]);
-                    Course course = courseRepository.findById(parts[2]);
-                    // Skip feedbacks whose student or course has been deleted
-                    if (student == null || course == null) {
-                        continue;
-                    }
-                    Feedback feedback = new Feedback(
-                            parts[0],                        // feedbackId
-                            student,                         // student object
-                            course,                          // course object
-                            Integer.parseInt(parts[3]),      // rating
-                            parts[4],                        // comment
-                            parts[5]                         // date
-                    );
-                    // Restore submitted status
-                    if (Boolean.parseBoolean(parts[6])) {
-                        feedback.submitFeedback();
-                    }
-                    feedbacks.add(feedback);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading feedbacks: " + e.getMessage());
-        }
-        return feedbacks;
+        return query(" ORDER BY created_at, feedback_id");
     }
 
     // Find feedback by ID
     public Feedback findById(String feedbackId) {
-        List<Feedback> feedbacks = findAll();
-        for (Feedback feedback : feedbacks) {
-            if (feedback.getFeedbackId().equals(feedbackId)) {
-                return feedback;
-            }
-        }
-        return null;
+        return query(" WHERE feedback_id = ?", feedbackId).stream().findFirst().orElse(null);
     }
 
     // Find all feedbacks by student ID
     public List<Feedback> findByStudentId(String studentId) {
-        List<Feedback> feedbacks = findAll();
-        List<Feedback> studentFeedbacks = new ArrayList<>();
-        for (Feedback feedback : feedbacks) {
-            if (feedback.getStudent().getStudentId().equals(studentId)) {
-                studentFeedbacks.add(feedback);
-            }
-        }
-        return studentFeedbacks;
+        return query(" WHERE student_id = ? ORDER BY created_at, feedback_id", studentId);
     }
 
     // Find all feedbacks by course ID
     public List<Feedback> findByCourseId(String courseId) {
-        List<Feedback> feedbacks = findAll();
-        List<Feedback> courseFeedbacks = new ArrayList<>();
-        for (Feedback feedback : feedbacks) {
-            if (feedback.getCourse().getCourseId().equals(courseId)) {
-                courseFeedbacks.add(feedback);
-            }
-        }
-        return courseFeedbacks;
+        return query(" WHERE course_id = ? ORDER BY created_at, feedback_id", courseId);
     }
 
-    // Update feedback in txt file
-    public void update(Feedback updatedFeedback) {
-        List<Feedback> feedbacks = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (Feedback feedback : feedbacks) {
-                if (feedback.getFeedbackId().equals(updatedFeedback.getFeedbackId())) {
-                    writer.write(updatedFeedback.getFeedbackId() + "," +
-                            updatedFeedback.getStudent().getStudentId() + "," +
-                            updatedFeedback.getCourse().getCourseId() + "," +
-                            updatedFeedback.getRating() + "," +
-                            updatedFeedback.getComment() + "," +
-                            updatedFeedback.getDate() + "," +
-                            updatedFeedback.isSubmitted());
-                } else {
-                    writer.write(feedback.getFeedbackId() + "," +
-                            feedback.getStudent().getStudentId() + "," +
-                            feedback.getCourse().getCourseId() + "," +
-                            feedback.getRating() + "," +
-                            feedback.getComment() + "," +
-                            feedback.getDate() + "," +
-                            feedback.isSubmitted());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error updating feedback: " + e.getMessage());
-        }
+    // Update feedback
+    public void update(Feedback f) {
+        jdbc.update("UPDATE feedbacks SET student_id = ?, course_id = ?, rating = ?, comment = ?, "
+                        + "feedback_date = CAST(? AS DATE), submitted = ? WHERE feedback_id = ?",
+                f.getStudent().getStudentId(), f.getCourse().getCourseId(), f.getRating(),
+                f.getComment(), f.getDate(), f.isSubmitted(), f.getFeedbackId());
     }
 
-    // Delete feedback from txt file
+    // Delete feedback
     public void delete(String feedbackId) {
-        List<Feedback> feedbacks = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (Feedback feedback : feedbacks) {
-                if (!feedback.getFeedbackId().equals(feedbackId)) {
-                    writer.write(feedback.getFeedbackId() + "," +
-                            feedback.getStudent().getStudentId() + "," +
-                            feedback.getCourse().getCourseId() + "," +
-                            feedback.getRating() + "," +
-                            feedback.getComment() + "," +
-                            feedback.getDate() + "," +
-                            feedback.isSubmitted());
-                    writer.newLine();
-                }
+        jdbc.update("DELETE FROM feedbacks WHERE feedback_id = ?", feedbackId);
+    }
+
+    // Runs one SELECT and attaches the Student and Course objects to each row.
+    private List<Feedback> query(String whereAndOrder, Object... args) {
+        Map<String, Student> students = RepositoryHelper.byId(studentRepository.findAll(), Student::getStudentId);
+        Map<String, Course> courses = RepositoryHelper.byId(courseRepository.findAll(), Course::getCourseId);
+        return jdbc.query(SELECT + whereAndOrder, (rs, rowNum) -> {
+            Student student = students.get(rs.getString("student_id"));
+            Course course = courses.get(rs.getString("course_id"));
+            if (student == null || course == null) return null;   // cannot happen thanks to foreign keys
+            Feedback feedback = new Feedback(
+                    rs.getString("feedback_id"), student, course, rs.getInt("rating"),
+                    rs.getString("comment"), rs.getString("feedback_date"));
+            if (rs.getBoolean("submitted")) {
+                feedback.submitFeedback();
             }
-        } catch (IOException e) {
-            System.out.println("Error deleting feedback: " + e.getMessage());
-        }
+            return feedback;
+        }, args).stream().filter(Objects::nonNull).toList();
     }
 }

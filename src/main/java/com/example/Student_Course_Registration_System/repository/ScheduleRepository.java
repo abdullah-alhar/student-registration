@@ -4,151 +4,88 @@ import com.example.Student_Course_Registration_System.model.Course;
 import com.example.Student_Course_Registration_System.model.Lecturer;
 import com.example.Student_Course_Registration_System.model.Room;
 import com.example.Student_Course_Registration_System.model.Schedule;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Repository
 public class ScheduleRepository {
 
-    private static final String FILE_PATH = "src/main/resources/data/schedules.txt";
-    private final CourseRepository courseRepository = new CourseRepository();
-    private final LecturerRepository lecturerRepository = new LecturerRepository();
-    private final RoomRepository roomRepository = new RoomRepository();
+    // Times are returned as "HH:mm" (e.g. 11:30), the same text the app used before
+    private static final String SELECT =
+            "SELECT schedule_id, course_id, lecturer_id, day, "
+            + "to_char(start_time, 'HH24:MI') AS start_time, to_char(end_time, 'HH24:MI') AS end_time, "
+            + "room_id FROM schedules";
 
-    // Save schedule to txt file
-    public void save(Schedule schedule) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(schedule.getScheduleId() + "," +
-                    schedule.getCourse().getCourseId() + "," +
-                    schedule.getLecturer().getLecturerId() + "," +
-                    schedule.getDay() + "," +
-                    schedule.getStartTime() + "," +
-                    schedule.getEndTime() + "," +
-                    schedule.getRoom().getRoomId());
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("Error saving schedule: " + e.getMessage());
-        }
+    private final JdbcTemplate jdbc;
+    private final CourseRepository courseRepository;
+    private final LecturerRepository lecturerRepository;
+    private final RoomRepository roomRepository;
+
+    public ScheduleRepository(JdbcTemplate jdbc, CourseRepository courseRepository,
+                              LecturerRepository lecturerRepository, RoomRepository roomRepository) {
+        this.jdbc = jdbc;
+        this.courseRepository = courseRepository;
+        this.lecturerRepository = lecturerRepository;
+        this.roomRepository = roomRepository;
     }
 
-    // Find all schedules from txt file
+    // Save new schedule
+    public void save(Schedule s) {
+        jdbc.update("INSERT INTO schedules (schedule_id, course_id, lecturer_id, day, start_time, end_time, room_id) "
+                        + "VALUES (?, ?, ?, ?, CAST(? AS TIME), CAST(? AS TIME), ?)",
+                s.getScheduleId(), s.getCourse().getCourseId(), s.getLecturer().getLecturerId(),
+                s.getDay(), s.getStartTime(), s.getEndTime(), s.getRoom().getRoomId());
+    }
+
+    // Find all schedules
     public List<Schedule> findAll() {
-        List<Schedule> schedules = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 7) {
-                    Course course = courseRepository.findById(parts[1]);
-                    Lecturer lecturer = lecturerRepository.findById(parts[2]);
-                    Room room = roomRepository.findById(parts[6]);
-                    // Skip schedules whose course, lecturer, or room has been deleted
-                    if (course == null || lecturer == null || room == null) {
-                        continue;
-                    }
-                    Schedule schedule = new Schedule(
-                            parts[0], // scheduleId
-                            course,   // course object
-                            lecturer, // lecturer object
-                            parts[3], // day
-                            parts[4], // startTime
-                            parts[5], // endTime
-                            room      // room object
-                    );
-                    schedules.add(schedule);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading schedules: " + e.getMessage());
-        }
-        return schedules;
+        return query(" ORDER BY created_at, schedule_id");
     }
 
     // Find schedule by ID
     public Schedule findById(String scheduleId) {
-        List<Schedule> schedules = findAll();
-        for (Schedule schedule : schedules) {
-            if (schedule.getScheduleId().equals(scheduleId)) {
-                return schedule;
-            }
-        }
-        return null;
+        return query(" WHERE schedule_id = ?", scheduleId).stream().findFirst().orElse(null);
     }
 
     // Find schedules by lecturer ID
     public List<Schedule> findByLecturerId(String lecturerId) {
-        List<Schedule> schedules = findAll();
-        List<Schedule> lecturerSchedules = new ArrayList<>();
-        for (Schedule schedule : schedules) {
-            if (schedule.getLecturer().getLecturerId().equals(lecturerId)) {
-                lecturerSchedules.add(schedule);
-            }
-        }
-        return lecturerSchedules;
+        return query(" WHERE lecturer_id = ? ORDER BY created_at, schedule_id", lecturerId);
     }
 
     // Find schedules by course ID
     public List<Schedule> findByCourseId(String courseId) {
-        List<Schedule> schedules = findAll();
-        List<Schedule> courseSchedules = new ArrayList<>();
-        for (Schedule schedule : schedules) {
-            if (schedule.getCourse().getCourseId().equals(courseId)) {
-                courseSchedules.add(schedule);
-            }
-        }
-        return courseSchedules;
+        return query(" WHERE course_id = ? ORDER BY created_at, schedule_id", courseId);
     }
 
-    // Update schedule in txt file
-    public void update(Schedule updatedSchedule) {
-        List<Schedule> schedules = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (Schedule schedule : schedules) {
-                if (schedule.getScheduleId().equals(updatedSchedule.getScheduleId())) {
-                    writer.write(updatedSchedule.getScheduleId() + "," +
-                            updatedSchedule.getCourse().getCourseId() + "," +
-                            updatedSchedule.getLecturer().getLecturerId() + "," +
-                            updatedSchedule.getDay() + "," +
-                            updatedSchedule.getStartTime() + "," +
-                            updatedSchedule.getEndTime() + "," +
-                            updatedSchedule.getRoom().getRoomId());
-                } else {
-                    writer.write(schedule.getScheduleId() + "," +
-                            schedule.getCourse().getCourseId() + "," +
-                            schedule.getLecturer().getLecturerId() + "," +
-                            schedule.getDay() + "," +
-                            schedule.getStartTime() + "," +
-                            schedule.getEndTime() + "," +
-                            schedule.getRoom().getRoomId());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error updating schedule: " + e.getMessage());
-        }
+    // Update schedule
+    public void update(Schedule s) {
+        jdbc.update("UPDATE schedules SET course_id = ?, lecturer_id = ?, day = ?, start_time = CAST(? AS TIME), "
+                        + "end_time = CAST(? AS TIME), room_id = ? WHERE schedule_id = ?",
+                s.getCourse().getCourseId(), s.getLecturer().getLecturerId(), s.getDay(),
+                s.getStartTime(), s.getEndTime(), s.getRoom().getRoomId(), s.getScheduleId());
     }
 
-    // Delete schedule from txt file
+    // Delete schedule
     public void delete(String scheduleId) {
-        List<Schedule> schedules = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (Schedule schedule : schedules) {
-                if (!schedule.getScheduleId().equals(scheduleId)) {
-                    writer.write(schedule.getScheduleId() + "," +
-                            schedule.getCourse().getCourseId() + "," +
-                            schedule.getLecturer().getLecturerId() + "," +
-                            schedule.getDay() + "," +
-                            schedule.getStartTime() + "," +
-                            schedule.getEndTime() + "," +
-                            schedule.getRoom().getRoomId());
-                    writer.newLine();
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error deleting schedule: " + e.getMessage());
-        }
+        jdbc.update("DELETE FROM schedules WHERE schedule_id = ?", scheduleId);
+    }
+
+    // Runs one SELECT and attaches the Course, Lecturer and Room objects to each row.
+    private List<Schedule> query(String whereAndOrder, Object... args) {
+        Map<String, Course> courses = RepositoryHelper.byId(courseRepository.findAll(), Course::getCourseId);
+        Map<String, Lecturer> lecturers = RepositoryHelper.byId(lecturerRepository.findAll(), Lecturer::getLecturerId);
+        Map<String, Room> rooms = RepositoryHelper.byId(roomRepository.findAll(), Room::getRoomId);
+        return jdbc.query(SELECT + whereAndOrder, (rs, rowNum) -> {
+            Course course = courses.get(rs.getString("course_id"));
+            Lecturer lecturer = lecturers.get(rs.getString("lecturer_id"));
+            Room room = rooms.get(rs.getString("room_id"));
+            if (course == null || lecturer == null || room == null) return null;  // cannot happen thanks to foreign keys
+            return new Schedule(rs.getString("schedule_id"), course, lecturer, rs.getString("day"),
+                    rs.getString("start_time"), rs.getString("end_time"), room);
+        }, args).stream().filter(Objects::nonNull).toList();
     }
 }

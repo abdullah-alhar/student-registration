@@ -1,92 +1,57 @@
 package com.example.Student_Course_Registration_System.repository;
 
 import com.example.Student_Course_Registration_System.model.CourseCategory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Repository
 public class CourseCategoryRepository {
 
-    private static final String FILE_PATH = "src/main/resources/data/courseCategories.txt";
+    private static final String SELECT = "SELECT category_id, category_name FROM course_categories";
 
-    // Save category to txt file
-    public void save(CourseCategory category) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(category.getCategoryId() + "," +
-                    category.getCategoryName());
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("Error saving category: " + e.getMessage());
-        }
+    private static final RowMapper<CourseCategory> ROW_MAPPER = (rs, rowNum) ->
+            new CourseCategory(rs.getString("category_id"), rs.getString("category_name"));
+
+    private final JdbcTemplate jdbc;
+
+    public CourseCategoryRepository(JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
     }
 
-    // Find all categories from txt file
+    // Save new category
+    public void save(CourseCategory category) {
+        jdbc.update("INSERT INTO course_categories (category_id, category_name) VALUES (?, ?)",
+                category.getCategoryId(), category.getCategoryName());
+    }
+
+    // Find all categories
     public List<CourseCategory> findAll() {
-        List<CourseCategory> categories = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    CourseCategory category = new CourseCategory(
-                            parts[0], // categoryId
-                            parts[1]  // categoryName
-                    );
-                    categories.add(category);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading categories: " + e.getMessage());
-        }
-        return categories;
+        return jdbc.query(SELECT + " ORDER BY created_at, category_id", ROW_MAPPER);
     }
 
     // Find category by ID
     public CourseCategory findById(String categoryId) {
-        List<CourseCategory> categories = findAll();
-        for (CourseCategory category : categories) {
-            if (category.getCategoryId().equals(categoryId)) {
-                return category;
-            }
-        }
-        return null;
+        return jdbc.query(SELECT + " WHERE category_id = ?", ROW_MAPPER, categoryId)
+                .stream().findFirst().orElse(null);
     }
 
-    // Update category in txt file
-    public void update(CourseCategory updatedCategory) {
-        List<CourseCategory> categories = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (CourseCategory category : categories) {
-                if (category.getCategoryId().equals(updatedCategory.getCategoryId())) {
-                    writer.write(updatedCategory.getCategoryId() + "," +
-                            updatedCategory.getCategoryName());
-                } else {
-                    writer.write(category.getCategoryId() + "," +
-                            category.getCategoryName());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error updating category: " + e.getMessage());
-        }
+    // Update category
+    public void update(CourseCategory category) {
+        jdbc.update("UPDATE course_categories SET category_name = ? WHERE category_id = ?",
+                category.getCategoryName(), category.getCategoryId());
     }
 
-    // Delete category from txt file
+    // Delete category. A category that still has courses is kept, because
+    // removing it would leave those courses without a category.
     public void delete(String categoryId) {
-        List<CourseCategory> categories = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (CourseCategory category : categories) {
-                if (!category.getCategoryId().equals(categoryId)) {
-                    writer.write(category.getCategoryId() + "," +
-                            category.getCategoryName());
-                    writer.newLine();
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error deleting category: " + e.getMessage());
+        try {
+            jdbc.update("DELETE FROM course_categories WHERE category_id = ?", categoryId);
+        } catch (DataIntegrityViolationException e) {
+            System.out.println("Cannot delete category " + categoryId + ": it still has courses");
         }
     }
 }

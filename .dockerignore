@@ -1,0 +1,15 @@
+# Keep secrets, old data and build output out of the Docker image
+.env
+.env.*
+.neon
+legacy-data/
+uploads/
+src/main/resources/data/
+target/
+.git/
+.github/
+.claude/
+frontend/
+node_modules/
+**/.DS_Store
+*.md

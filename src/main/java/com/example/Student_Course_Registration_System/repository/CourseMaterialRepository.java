@@ -1,150 +1,85 @@
 package com.example.Student_Course_Registration_System.repository;
 
 import com.example.Student_Course_Registration_System.model.CourseMaterial;
+import com.example.Student_Course_Registration_System.repository.UploadedFileRepository.StoredFile;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
-import java.util.ArrayList;
 import java.util.List;
 
 @Repository
 public class CourseMaterialRepository {
 
-    private static final String FILE_PATH = "src/main/resources/data/courseMaterials.txt";
-    private static final String UPLOAD_PATH = "uploads/materials/";
+    private static final String SELECT =
+            "SELECT material_id, title, file_type, course_id, file_name FROM course_materials";
 
-    // Save course material to txt file
-    public void save(CourseMaterial material) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(material.getMaterialId() + "," +
-                    material.getTitle() + "," +
-                    material.getFileType() + "," +
-                    material.getCourseId() + "," +
-                    material.getFileName());
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("Error saving course material: " + e.getMessage());
-        }
+    private static final RowMapper<CourseMaterial> ROW_MAPPER = (rs, rowNum) -> {
+        CourseMaterial material = new CourseMaterial(
+                rs.getString("material_id"),
+                rs.getString("title"),
+                rs.getString("file_type"),
+                rs.getString("course_id"));
+        material.saveFile(rs.getString("file_name"));
+        return material;
+    };
+
+    private final JdbcTemplate jdbc;
+    private final UploadedFileRepository fileRepository;
+
+    public CourseMaterialRepository(JdbcTemplate jdbc, UploadedFileRepository fileRepository) {
+        this.jdbc = jdbc;
+        this.fileRepository = fileRepository;
     }
 
-    // Save uploaded file to uploads/materials/ folder
-    public String saveUploadedFile(org.springframework.web.multipart.MultipartFile file) {
-        try {
-            // Create uploads/materials/ folder if not exists
-            File uploadDir = new File(UPLOAD_PATH).getAbsoluteFile();
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
-
-            // Save file to folder
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            File destination = new File(uploadDir, fileName);
-            file.transferTo(destination);
-            return fileName;
-
-        } catch (IOException e) {
-            System.out.println("Error uploading file: " + e.getMessage());
-            return null;
-        }
+    // Save new course material
+    public void save(CourseMaterial m) {
+        jdbc.update("INSERT INTO course_materials (material_id, title, file_type, course_id, file_name) "
+                        + "VALUES (?, ?, ?, ?, ?)",
+                m.getMaterialId(), m.getTitle(), m.getFileType(), m.getCourseId(), m.getFileName());
     }
 
-    // Find all course materials from txt file
+    // Save uploaded file (stored in the database). Returns the saved file name.
+    public String saveUploadedFile(MultipartFile file) {
+        return fileRepository.save(UploadedFileRepository.MATERIALS, file);
+    }
+
+    // Load an uploaded material file, or null if it does not exist
+    public StoredFile loadUploadedFile(String fileName) {
+        return fileRepository.find(UploadedFileRepository.MATERIALS, fileName);
+    }
+
+    // Find all course materials
     public List<CourseMaterial> findAll() {
-        List<CourseMaterial> materials = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 5) {
-                    CourseMaterial material = new CourseMaterial(
-                            parts[0], // materialId
-                            parts[1], // title
-                            parts[2], // fileType
-                            parts[3]  // courseId
-                    );
-                    material.saveFile(parts[4]); // fileName
-                    materials.add(material);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error reading course materials: " + e.getMessage());
-        }
-        return materials;
+        return jdbc.query(SELECT + " ORDER BY created_at, material_id", ROW_MAPPER);
     }
 
     // Find material by ID
     public CourseMaterial findById(String materialId) {
-        List<CourseMaterial> materials = findAll();
-        for (CourseMaterial material : materials) {
-            if (material.getMaterialId().equals(materialId)) {
-                return material;
-            }
-        }
-        return null;
+        return jdbc.query(SELECT + " WHERE material_id = ?", ROW_MAPPER, materialId)
+                .stream().findFirst().orElse(null);
     }
 
     // Find all materials by course ID
     public List<CourseMaterial> findByCourseId(String courseId) {
-        List<CourseMaterial> materials = findAll();
-        List<CourseMaterial> courseMaterials = new ArrayList<>();
-        for (CourseMaterial material : materials) {
-            if (material.getCourseId().equals(courseId)) {
-                courseMaterials.add(material);
-            }
-        }
-        return courseMaterials;
+        return jdbc.query(SELECT + " WHERE course_id = ? ORDER BY created_at, material_id", ROW_MAPPER, courseId);
     }
 
-    // Update material in txt file
-    public void update(CourseMaterial updatedMaterial) {
-        List<CourseMaterial> materials = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (CourseMaterial material : materials) {
-                if (material.getMaterialId().equals(updatedMaterial.getMaterialId())) {
-                    writer.write(updatedMaterial.getMaterialId() + "," +
-                            updatedMaterial.getTitle() + "," +
-                            updatedMaterial.getFileType() + "," +
-                            updatedMaterial.getCourseId() + "," +
-                            updatedMaterial.getFileName());
-                } else {
-                    writer.write(material.getMaterialId() + "," +
-                            material.getTitle() + "," +
-                            material.getFileType() + "," +
-                            material.getCourseId() + "," +
-                            material.getFileName());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
-            System.out.println("Error updating course material: " + e.getMessage());
-        }
+    // Update material
+    public void update(CourseMaterial m) {
+        jdbc.update("UPDATE course_materials SET title = ?, file_type = ?, course_id = ?, file_name = ? "
+                        + "WHERE material_id = ?",
+                m.getTitle(), m.getFileType(), m.getCourseId(), m.getFileName(), m.getMaterialId());
     }
 
-    // Delete material from txt file
+    // Delete material
     public void delete(String materialId) {
-        List<CourseMaterial> materials = findAll();
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, false))) {
-            for (CourseMaterial material : materials) {
-                if (!material.getMaterialId().equals(materialId)) {
-                    writer.write(material.getMaterialId() + "," +
-                            material.getTitle() + "," +
-                            material.getFileType() + "," +
-                            material.getCourseId() + "," +
-                            material.getFileName());
-                    writer.newLine();
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Error deleting course material: " + e.getMessage());
-        }
+        jdbc.update("DELETE FROM course_materials WHERE material_id = ?", materialId);
     }
 
-    // Delete uploaded file from folder
+    // Delete uploaded file
     public void deleteUploadedFile(String fileName) {
-        File file = new File(UPLOAD_PATH + fileName);
-        if (file.exists()) {
-            file.delete();
-            System.out.println("File deleted successfully: " + fileName);
-        }
+        fileRepository.delete(UploadedFileRepository.MATERIALS, fileName);
     }
 }
